@@ -21,10 +21,10 @@ const start = async () => {
 
   app.listen(env.PORT, () => {
     console.log(
-      `[server] Listening on https://workhorseservice.onrender.com/:${env.PORT} (${env.NODE_ENV})`,
+      `[server] Listening on http://localhost:${env.PORT} (${env.NODE_ENV})`,
     );
     console.log(
-      `[server] API docs available at https://workhorseservice.onrender.com/:${env.PORT}/api-docs`,
+      `[server] API docs available at http://localhost:${env.PORT}/api-docs`,
     );
     startScheduler();
   });

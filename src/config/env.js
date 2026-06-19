@@ -20,7 +20,7 @@ const envSchema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
   PORT: z.coerce.number().default(5000),
-  APP_BASE_URL: z.string().default("http://localhost:5000"),
+  APP_BASE_URL: z.string().default("https://workhorseservice.onrender.com"),
   FRONTEND_URL: z.string().default("http://localhost:5173"),
 
   DB_DIALECT: z.string().default("mssql"),
