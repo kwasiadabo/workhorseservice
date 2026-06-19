@@ -279,9 +279,9 @@ const getMyDashboard = async (tenantId, userId) => {
   };
 };
 
-// Owner/manager-facing tenant-wide summary — money, what's coming up today,
-// who's busy, and this week's growth signals. Distinct from getMyDashboard,
-// which is scoped to the caller's own Employee record.
+// Owner/manager-facing tenant-wide summary — today's revenue, this week's
+// revenue trend, who's busy, and this week's growth signals. Distinct from
+// getMyDashboard, which is scoped to the caller's own Employee record.
 const getOwnerSummary = async (tenantId) => {
   const dates = getDateBoundaries();
 
@@ -292,54 +292,27 @@ const getOwnerSummary = async (tenantId) => {
   });
   const todayRevenue = Number(revenueRow?.total ?? 0);
 
-  // Outstanding balance — work done (awaiting_payment), money not yet collected.
-  const awaitingBookings = await Booking.findAll({
-    where: { tenantId, status: 'awaiting_payment' },
-    attributes: ['id', 'totalAmount'],
+  // Revenue trend for the week — daily completed-payment totals, Mon-Sun,
+  // zero-filled (including days later in the week that haven't happened yet).
+  const weekPayments = await Payment.findAll({
+    where: { tenantId, status: 'completed', paidAt: { [Op.gte]: dates.weekStart, [Op.lt]: dates.weekEnd } },
+    attributes: ['amount', 'paidAt'],
     raw: true,
   });
-  let outstandingBalance = 0;
-  if (awaitingBookings.length) {
-    const paidRows = await Payment.findAll({
-      where: { tenantId, status: 'completed', bookingId: { [Op.in]: awaitingBookings.map((b) => b.id) } },
-      attributes: ['bookingId', [sequelize.fn('COALESCE', sequelize.fn('SUM', sequelize.col('amount')), 0), 'paid']],
-      group: ['bookingId'],
-      raw: true,
-    });
-    const paidMap = new Map(paidRows.map((r) => [r.bookingId, Number(r.paid)]));
-    outstandingBalance = awaitingBookings.reduce(
-      (sum, b) => sum + Math.max(0, Number(b.totalAmount) - (paidMap.get(b.id) ?? 0)),
-      0
-    );
+  const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const revenueTrendMap = new Map();
+  for (let i = 0; i < 7; i += 1) {
+    const day = new Date(dates.weekStart);
+    day.setUTCDate(day.getUTCDate() + i);
+    const key = day.toISOString().slice(0, 10);
+    revenueTrendMap.set(key, { date: key, label: DAY_LABELS[i], total: 0 });
   }
-
-  // Next few upcoming bookings — a real mini-agenda, not just a count.
-  const upcomingRows = await Booking.findAll({
-    where: { tenantId, status: { [Op.notIn]: TERMINAL_BOOKING_STATUSES }, scheduledAt: { [Op.gte]: new Date() } },
-    include: [
-      { model: Customer, attributes: ['id', 'name'] },
-      { model: Branch, attributes: ['id', 'name'] },
-      {
-        model: BookingAssignment,
-        as: 'assignments',
-        include: [{ model: Employee, attributes: ['id', 'firstName', 'lastName'] }],
-      },
-    ],
-    order: [['scheduledAt', 'ASC']],
-    limit: 5,
-    subQuery: false,
+  weekPayments.forEach((payment) => {
+    const key = new Date(payment.paidAt).toISOString().slice(0, 10);
+    const entry = revenueTrendMap.get(key);
+    if (entry) entry.total += Number(payment.amount);
   });
-  const upcoming = upcomingRows.map((booking) => ({
-    bookingId: booking.id,
-    bookingNumber: booking.bookingNumber,
-    scheduledAt: booking.scheduledAt,
-    status: booking.status,
-    customerName: booking.Customer?.name ?? '—',
-    branchName: booking.Branch?.name ?? '—',
-    providerNames: (booking.assignments ?? [])
-      .map((a) => (a.Employee ? `${a.Employee.firstName} ${a.Employee.lastName}` : null))
-      .filter(Boolean),
-  }));
+  const revenueTrend = [...revenueTrendMap.values()];
 
   // Staff utilization today — busy (has an in-progress assignment right
   // now) vs. available, plus how many assignments they have today.
@@ -420,8 +393,8 @@ const getOwnerSummary = async (tenantId) => {
   const topService = [...serviceRevenueMap.values()].sort((a, b) => b.revenue - a.revenue)[0] ?? null;
 
   return {
-    money: { todayRevenue, outstandingBalance },
-    upcoming,
+    money: { todayRevenue },
+    revenueTrend,
     staffUtilization,
     growth: { newCustomers, returningCustomers, topService },
   };
