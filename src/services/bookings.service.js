@@ -14,6 +14,7 @@ const {
   User,
   Tenant,
   VehicleType,
+  Vehicle,
 } = require('../models');
 
 const resolveServicePrice = (service, vehicleTypeId) => {
@@ -48,6 +49,7 @@ const DETAIL_INCLUDES = [
   { model: Tenant, attributes: ['id', 'name', 'email', 'phone', 'address', 'logoUrl'] },
   { model: User, as: 'creator', attributes: ['id', 'firstName', 'lastName'] },
   { model: VehicleType, attributes: ['id', 'name'] },
+  { model: Vehicle, attributes: ['id', 'registration', 'make', 'model'] },
 ];
 
 const verifyBranch = async (tenantId, branchId) => assertTenantOwnership(await Branch.findByPk(branchId), tenantId);
@@ -226,9 +228,40 @@ const getByIdForUser = async (tenantId, user, id) => {
   return booking;
 };
 
+// Resolves the vehicle-related fields to snapshot onto the Booking. If a
+// `vehicleId` is given (the staff-facing create form's flow), it takes
+// precedence and its details are looked up; otherwise falls back to whatever
+// raw vehicle fields were passed directly (e.g. the public booking portal,
+// which only ever sends `vehicleTypeId` for pricing).
+const resolveVehicleSnapshot = async (tenantId, data) => {
+  if (!data.vehicleId) {
+    return {
+      vehicleId: null,
+      vehicleTypeId: data.vehicleTypeId ?? null,
+      vehicleRegistration: data.vehicleRegistration ?? null,
+      vehicleMake: data.vehicleMake ?? null,
+      vehicleModel: data.vehicleModel ?? null,
+    };
+  }
+
+  const vehicle = assertTenantOwnership(await Vehicle.findByPk(data.vehicleId), tenantId);
+  if (vehicle.customerId !== data.customerId) {
+    throw ApiError.badRequest('Selected vehicle does not belong to this client');
+  }
+
+  return {
+    vehicleId: vehicle.id,
+    vehicleTypeId: vehicle.vehicleTypeId,
+    vehicleRegistration: vehicle.registration,
+    vehicleMake: vehicle.make,
+    vehicleModel: vehicle.model,
+  };
+};
+
 const create = async (tenantId, userId, data) => {
   await verifyBranch(tenantId, data.branchId);
   const customer = data.customerId ? await verifyCustomer(tenantId, data.customerId) : null;
+  const vehicleSnapshot = await resolveVehicleSnapshot(tenantId, data);
 
   const serviceIds = data.services.map((item) => item.serviceId);
   const services = await Service.findAll({
@@ -246,7 +279,7 @@ const create = async (tenantId, userId, data) => {
     let totalAmount = 0;
     const lineItems = data.services.map((item) => {
       const service = serviceMap.get(item.serviceId);
-      const price = resolveServicePrice(service, data.vehicleTypeId);
+      const price = resolveServicePrice(service, vehicleSnapshot.vehicleTypeId);
       totalAmount += price * item.quantity;
       return {
         tenantId,
@@ -268,10 +301,7 @@ const create = async (tenantId, userId, data) => {
         notes: data.notes,
         totalAmount,
         createdBy: userId,
-        vehicleTypeId: data.vehicleTypeId ?? null,
-        vehicleRegistration: data.vehicleRegistration ?? null,
-        vehicleMake: data.vehicleMake ?? null,
-        vehicleModel: data.vehicleModel ?? null,
+        ...vehicleSnapshot,
       },
       { transaction: t }
     );

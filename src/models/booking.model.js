@@ -23,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       satisfactionRating: { type: DataTypes.INTEGER, allowNull: true },
       employeeConcerns: DataTypes.TEXT,
       vehicleTypeId: { type: DataTypes.UUID, allowNull: true },
+      vehicleId: { type: DataTypes.UUID, allowNull: true },
       vehicleRegistration: { type: DataTypes.STRING(50), allowNull: true },
       vehicleMake: { type: DataTypes.STRING(100), allowNull: true },
       vehicleModel: { type: DataTypes.STRING(100), allowNull: true },
@@ -47,6 +48,7 @@ module.exports = (sequelize, DataTypes) => {
     Booking.hasMany(models.BookingAssignment, { foreignKey: 'bookingId', as: 'assignments' });
     Booking.hasMany(models.Payment, { foreignKey: 'bookingId' });
     Booking.belongsTo(models.VehicleType, { foreignKey: 'vehicleTypeId' });
+    Booking.belongsTo(models.Vehicle, { foreignKey: 'vehicleId' });
   };
 
   return Booking;

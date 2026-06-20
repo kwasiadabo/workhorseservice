@@ -21,6 +21,7 @@ const createBookingSchema = {
     scheduledAt: z.coerce.date(),
     notes: z.string().optional(),
     services: z.array(bookingServiceItemSchema).min(1),
+    vehicleId: z.string().uuid().optional(),
     vehicleTypeId: z.string().uuid().optional(),
     vehicleRegistration: z.string().max(50).optional(),
     vehicleMake: z.string().max(100).optional(),

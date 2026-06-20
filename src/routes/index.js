@@ -38,6 +38,7 @@ enforced.use('/cash-handovers', require('./cashHandovers.routes'));
 enforced.use('/dashboard', require('./dashboard.routes'));
 enforced.use('/reports', require('./reports.routes'));
 enforced.use('/vehicle-types', require('./vehicleTypes.routes'));
+enforced.use('/vehicles', require('./vehicles.routes'));
 enforced.use('/expense-categories', require('./expenseCategories.routes'));
 enforced.use('/expenses', require('./expenses.routes'));
 enforced.use('/expense-report', require('./expenseReport.routes'));
