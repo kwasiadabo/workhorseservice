@@ -29,6 +29,7 @@ enforced.use('/users', require('./users.routes'));
 enforced.use('/branches', require('./branches.routes'));
 enforced.use('/employees', require('./employees.routes'));
 enforced.use('/positions', require('./positions.routes'));
+enforced.use('/teams', require('./teams.routes'));
 enforced.use('/customers', require('./customers.routes'));
 enforced.use('/service-categories', require('./serviceCategories.routes'));
 enforced.use('/services', require('./services.routes'));
