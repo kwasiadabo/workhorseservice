@@ -15,6 +15,7 @@ const {
   Tenant,
   VehicleType,
   Vehicle,
+  Team,
 } = require('../models');
 
 const resolveServicePrice = (service, vehicleTypeId) => {
@@ -408,6 +409,11 @@ const addAssignment = async (tenantId, user, bookingId, data) => {
     }
   }
 
+  if (data.teamId) {
+    const team = await Team.findByPk(data.teamId);
+    assertTenantOwnership(team, tenantId);
+  }
+
   await sequelize.transaction(async (t) => {
     const existingLead = await BookingAssignment.findOne({
       where: { bookingId: booking.id, isTeamLead: true },
@@ -420,6 +426,7 @@ const addAssignment = async (tenantId, user, bookingId, data) => {
         bookingId: booking.id,
         bookingServiceId: data.bookingServiceId || null,
         employeeId: employee.id,
+        teamId: data.teamId || null,
         status: 'waiting',
         assignedAt: new Date(),
         isTeamLead: false,

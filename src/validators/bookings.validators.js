@@ -65,6 +65,7 @@ const createAssignmentSchema = {
   body: z.object({
     employeeId: z.string().uuid(),
     bookingServiceId: z.string().uuid().optional(),
+    teamId: z.string().uuid().optional(),
     isTeamLead: z.boolean().optional(),
   }),
 };

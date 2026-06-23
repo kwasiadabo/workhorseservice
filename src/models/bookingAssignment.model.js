@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
       bookingId: { type: DataTypes.UUID, allowNull: false },
       bookingServiceId: { type: DataTypes.UUID, allowNull: true },
       employeeId: { type: DataTypes.UUID, allowNull: false },
+      teamId: { type: DataTypes.UUID, allowNull: true },
       status: {
         type: DataTypes.ENUM('waiting', 'in_progress', 'completed', 'cancelled'),
         allowNull: false,
@@ -28,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
     BookingAssignment.belongsTo(models.Booking, { foreignKey: 'bookingId' });
     BookingAssignment.belongsTo(models.BookingService, { foreignKey: 'bookingServiceId' });
     BookingAssignment.belongsTo(models.Employee, { foreignKey: 'employeeId' });
+    BookingAssignment.belongsTo(models.Team, { foreignKey: 'teamId' });
   };
 
   return BookingAssignment;

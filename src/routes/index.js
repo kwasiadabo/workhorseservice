@@ -47,6 +47,7 @@ enforced.use('/bookings-report', require('./bookingsReport.routes'));
 enforced.use('/payments-report', require('./paymentsReport.routes'));
 enforced.use('/revenue-report', require('./revenueReport.routes'));
 enforced.use('/service-provider-report', require('./serviceProviderReport.routes'));
+enforced.use('/team-performance-report', require('./teamPerformanceReport.routes'));
 enforced.use('/banks', require('./banks.routes'));
 enforced.use('/bank-accounts', require('./bankAccounts.routes'));
 enforced.use('/bank-transactions', require('./bankTransactions.routes'));
