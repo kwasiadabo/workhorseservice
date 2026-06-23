@@ -259,7 +259,31 @@ const resolveVehicleSnapshot = async (tenantId, data) => {
   };
 };
 
+// Backstop for the frontend's setup-completeness guard (BookingCreatePage) —
+// fires even on a direct API call or a stale page, since a booking literally
+// cannot exist without these. Service Categories are deliberately excluded:
+// Service.categoryId is nullable, so a category-less service is still
+// bookable (see setup.service.js for the fuller, four-item checklist used
+// elsewhere to force initial tenant setup).
+const assertBookable = async (tenantId) => {
+  const [branchCount, serviceCount, employeeCount] = await Promise.all([
+    Branch.count({ where: { tenantId } }),
+    Service.count({ where: { tenantId } }),
+    Employee.count({ where: { tenantId } }),
+  ]);
+
+  const missing = [];
+  if (branchCount === 0) missing.push('Branches');
+  if (serviceCount === 0) missing.push('Services');
+  if (employeeCount === 0) missing.push('Workers');
+
+  if (missing.length > 0) {
+    throw ApiError.badRequest(`Complete your business setup before creating bookings — missing: ${missing.join(', ')}`);
+  }
+};
+
 const create = async (tenantId, userId, data) => {
+  await assertBookable(tenantId);
   await verifyBranch(tenantId, data.branchId);
   const customer = data.customerId ? await verifyCustomer(tenantId, data.customerId) : null;
   const vehicleSnapshot = await resolveVehicleSnapshot(tenantId, data);
