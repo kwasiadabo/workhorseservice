@@ -1,0 +1,12 @@
+# Secrets — never commit real values. Copy .env.example to .env locally.
+.env
+.env.local
+.env.*.local
+
+node_modules/
+uploads/
+*.log
+npm-debug.log*
+
+.DS_Store
+coverage/
