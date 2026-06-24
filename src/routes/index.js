@@ -11,6 +11,7 @@ router.use('/business-types', require('./businessTypes.routes'));
 router.use('/public', require('./public.routes'));
 
 // ── Super admin (no tenant context) ────────────────────────────────────────
+router.use('/admin/dashboard', require('./admin.dashboard.routes'));
 router.use('/admin/tenants', require('./admin.tenants.routes'));
 router.use('/admin/users', require('./admin.users.routes'));
 router.use('/admin/business-types', require('./admin.businessTypes.routes'));
