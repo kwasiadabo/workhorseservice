@@ -61,7 +61,9 @@ module.exports = {
     for (const col of ['tokenUsedAt', 'token', 'comment', 'stars', 'employeeId', 'customerId', 'bookingId']) {
       try {
         await queryInterface.removeColumn('Ratings', col);
-      } catch (_) {}
+      } catch {
+        // column may not exist if up was only partially applied
+      }
     }
   },
 };

@@ -1,6 +1,5 @@
-const { Op, QueryTypes } = require('sequelize');
-const { sequelize, Payment, Booking, Branch } = require('../models');
-const { withTenantScope } = require('../utils/tenantScope');
+const { QueryTypes } = require('sequelize');
+const { sequelize } = require('../models');
 
 const getPeriod = (query) => {
   const now = new Date();

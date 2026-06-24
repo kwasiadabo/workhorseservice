@@ -1,6 +1,7 @@
 'use strict';
 
-const { Tenant, Customer, Booking } = require('../models');
+const { Op } = require('sequelize');
+const { Tenant, Customer } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { withTenantScope, assertTenantOwnership } = require('../utils/tenantScope');
 const { parsePagination, buildPaginationMeta } = require('../utils/pagination');
@@ -26,7 +27,7 @@ const updateSettings = async (tenantId, data) => {
 const listCustomerPoints = async (tenantId, query = {}) => {
   const { page, limit, offset, order } = parsePagination(query);
   const where = withTenantScope(tenantId, {});
-  if (query.search) where.name = { $like: `%${query.search}%` };
+  if (query.search) where.name = { [Op.like]: `%${query.search}%` };
 
   const { rows, count } = await Customer.findAndCountAll({
     where,

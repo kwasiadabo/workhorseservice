@@ -1,7 +1,6 @@
 const { Op, fn, col, literal } = require('sequelize');
 const { BankTransaction, BankAccount, Bank } = require('../models');
 const { withTenantScope } = require('../utils/tenantScope');
-const sequelize = require('../config/database');
 
 const getReport = async (tenantId, { startDate, endDate, bankAccountId }) => {
   const txWhere = withTenantScope(tenantId, {

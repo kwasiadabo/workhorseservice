@@ -17,7 +17,7 @@ module.exports = {
   async down(queryInterface) {
     try {
       await queryInterface.removeColumn('Bookings', 'source');
-    } catch (_) {
+    } catch {
       // already removed
     }
   },

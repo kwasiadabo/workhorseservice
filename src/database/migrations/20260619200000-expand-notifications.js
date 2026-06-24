@@ -76,7 +76,11 @@ module.exports = {
   async down(queryInterface) {
     const cols = ['error', 'messageId', 'sentAt', 'scheduledFor', 'status', 'body', 'to', 'type', 'channel', 'customerId', 'bookingId'];
     for (const col of cols) {
-      try { await queryInterface.removeColumn('Notifications', col); } catch (_) {}
+      try {
+        await queryInterface.removeColumn('Notifications', col);
+      } catch {
+        // column may not exist if up was only partially applied
+      }
     }
   },
 };

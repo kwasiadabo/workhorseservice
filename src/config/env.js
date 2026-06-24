@@ -57,6 +57,9 @@ const envSchema = z.object({
   NALO_API_KEY: z.string().default(""),
   NALO_SENDER_ID: z.string().default("WorkHorse"),
   NALO_API_URL: z.string().default(""),
+
+  SENTRY_DSN: z.string().default(""),
+  SCHEDULER_ENABLED: boolFromString(true),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -84,12 +87,16 @@ if (!env.isDbConfigured) {
 }
 
 if (env.NODE_ENV === "production") {
+  // Anyone who knows these committed dev defaults (they're in .env.example)
+  // could forge valid access tokens for any user, including super_admin.
+  // A warning is not enough — refuse to boot rather than risk it shipping.
   if (
     env.JWT_ACCESS_SECRET === "dev_access_secret_change_me" ||
     env.JWT_REFRESH_SECRET === "dev_refresh_secret_change_me"
   ) {
-    console.warn(
-      "[config] Using default JWT secrets in production. Set JWT_ACCESS_SECRET / JWT_REFRESH_SECRET.",
+    throw new Error(
+      "[config] Refusing to start in production with default JWT secrets. " +
+        "Set JWT_ACCESS_SECRET / JWT_REFRESH_SECRET to real, unique values.",
     );
   }
   if (env.PAYSTACK_SECRET_KEY.startsWith("sk_test_")) {

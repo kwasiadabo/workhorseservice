@@ -526,4 +526,10 @@ module.exports = {
   updateAssignment,
   removeAssignment,
   computeStatusStamps,
+  // Exported for unit testing only (see __tests__/bookings.service.test.js) —
+  // not part of the service's public API used by the controller layer.
+  assertBookable,
+  recalculateTotal,
+  promoteTeamLead,
+  reassignLeadIfVacant,
 };

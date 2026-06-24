@@ -1,7 +1,10 @@
 const env = require("./src/config/env");
+require("./src/config/sentry"); // initializes (or stays inactive) before anything else runs
 const sequelize = require("./src/config/database");
 const app = require("./src/app");
 const { startScheduler } = require("./src/scheduler");
+
+const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 const start = async () => {
   if (env.isDbConfigured) {
@@ -19,7 +22,7 @@ const start = async () => {
     }
   }
 
-  app.listen(env.PORT, () => {
+  const server = app.listen(env.PORT, () => {
     console.log(
       `[server] Listening on http://localhost:${env.PORT} (${env.NODE_ENV})`,
     );
@@ -28,6 +31,31 @@ const start = async () => {
     );
     startScheduler();
   });
+
+  // On a rolling restart/redeploy, the platform sends SIGTERM — without this,
+  // in-flight requests (including booking/payment transactions) get hard-killed
+  // mid-flight instead of finishing, and the Sequelize pool is never released.
+  const shutdown = (signal) => {
+    console.log(`[server] ${signal} received, shutting down gracefully...`);
+    const forceExit = setTimeout(() => {
+      console.error("[server] Shutdown timed out, forcing exit.");
+      process.exit(1);
+    }, SHUTDOWN_TIMEOUT_MS);
+
+    server.close(async () => {
+      clearTimeout(forceExit);
+      try {
+        await sequelize.close();
+        console.log("[db] Connection pool closed.");
+      } catch (err) {
+        console.error(`[db] Error closing connection pool: ${err.message}`);
+      }
+      process.exit(0);
+    });
+  };
+
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
 };
 
 start();

@@ -24,7 +24,9 @@ module.exports = {
     for (const col of ['loyaltyRewardDescription', 'loyaltyThreshold']) {
       try {
         await queryInterface.removeColumn('Tenants', col);
-      } catch (_) {}
+      } catch {
+        // column may not exist if up was only partially applied
+      }
     }
   },
 };

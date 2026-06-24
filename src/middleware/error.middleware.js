@@ -1,6 +1,7 @@
 const { ZodError } = require('zod');
 const env = require('../config/env');
 const ApiError = require('../utils/ApiError');
+const { captureException } = require('../config/sentry');
 
 // Centralized error handler — must be the last middleware registered.
 // eslint-disable-next-line no-unused-vars
@@ -29,7 +30,23 @@ const errorMiddleware = (err, req, res, next) => {
     return res.status(409).json({ success: false, message: 'Related resource not found or in use' });
   }
 
-  console.error(err);
+  // A single JSON line — no new logging dependency, but structured enough to
+  // grep/parse from raw stdout (the only place logs go in production today;
+  // see docs/OPERATIONS.md). Includes request context an incident actually
+  // needs: which tenant, which route, what came back.
+  console.error(
+    JSON.stringify({
+      level: 'error',
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      path: req.originalUrl,
+      tenantId: req.tenantId ?? req.user?.tenantId ?? null,
+      status: 500,
+      message: err.message,
+      stack: env.NODE_ENV === 'production' ? undefined : err.stack,
+    })
+  );
+  captureException(err);
 
   return res.status(500).json({
     success: false,

@@ -1,7 +1,7 @@
 'use strict';
 
 const { Op } = require('sequelize');
-const { Notification, Booking, Customer } = require('../models');
+const { Notification } = require('../models');
 const { sendSms, normalisePhone } = require('../utils/sms');
 const { tenantHasFeature } = require('../utils/planFeatures');
 const env = require('../config/env');

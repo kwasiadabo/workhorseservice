@@ -12,7 +12,7 @@ const verifyPaystackSignature = (req, res, next) => {
     .update(req.body)
     .digest('hex');
 
-  let signaturesMatch = false;
+  let signaturesMatch;
   try {
     signaturesMatch = crypto.timingSafeEqual(
       Buffer.from(hash, 'hex'),

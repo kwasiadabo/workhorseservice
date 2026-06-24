@@ -29,7 +29,7 @@ module.exports = {
     for (const [table, col] of drops) {
       try {
         await queryInterface.removeColumn(table, col);
-      } catch (_) {
+      } catch {
         // column may not exist if up was only partially applied
       }
     }

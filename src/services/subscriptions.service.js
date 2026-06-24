@@ -110,11 +110,11 @@ const initializePayment = async (tenantId, { planId, billingCycle = 'monthly' })
   const reference = paystack.generateReference(tenantId);
 
   // Store intent on subscription row before redirecting
-  let sub = await Subscription.findOne({ where: { tenantId } });
+  const sub = await Subscription.findOne({ where: { tenantId } });
   if (sub) {
     await sub.update({ planId, paystackReference: reference, billingCycle });
   } else {
-    sub = await Subscription.create({
+    await Subscription.create({
       tenantId,
       planId,
       status: 'trialing',

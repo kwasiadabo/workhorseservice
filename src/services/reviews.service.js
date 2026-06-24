@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const { Op } = require('sequelize');
 const { sequelize, Rating, Booking, Customer, Employee, Tenant } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { withTenantScope } = require('../utils/tenantScope');
@@ -52,7 +53,7 @@ const submitReview = async (token, data) => {
 // Tenant-scoped: list reviews
 const list = async (tenantId, query = {}) => {
   const { page, limit, offset, order } = parsePagination(query);
-  const where = withTenantScope(tenantId, { tokenUsedAt: { $ne: null } });
+  const where = withTenantScope(tenantId, { tokenUsedAt: { [Op.ne]: null } });
 
   const { rows, count } = await Rating.findAndCountAll({
     where,

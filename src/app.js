@@ -35,6 +35,11 @@ app.use(cookieParser());
 
 if (env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
+} else {
+  // No request logging at all existed in production before this — 'combined'
+  // gives a standard access-log line (method, path, status, response time,
+  // referrer/UA) to stdout, which the hosting platform can capture.
+  app.use(morgan('combined'));
 }
 
 // Global rate limit
@@ -42,6 +47,30 @@ app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+);
+
+// Report endpoints aggregate full date-range datasets in memory (see
+// docs/SCALABILITY.md) — cheap enough to leave reachable, but not at the
+// same 300-req budget as a plain GET /branches. A tighter, separate limiter
+// caps abuse/accidental hammering of these specific routes.
+const REPORT_PATHS = [
+  '/api/v1/bookings-report',
+  '/api/v1/payments-report',
+  '/api/v1/revenue-report',
+  '/api/v1/service-provider-report',
+  '/api/v1/team-performance-report',
+  '/api/v1/commission',
+  '/api/v1/expense-report',
+  '/api/v1/banking-report',
+];
+app.use(
+  REPORT_PATHS,
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 30,
     standardHeaders: true,
     legacyHeaders: false,
   })
